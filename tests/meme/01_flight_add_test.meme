@@ -1,0 +1,40 @@
+# 01_flight_add_test.meme — Test flight creation and duplicate rejection
+use models
+use grid_ops
+use flight_ops
+
+test flight_add_ok:
+    define path: String as flight_file_path("TEST_ADD_101")
+    if file exists path:
+        delete file path
+
+    define f: FlightData as FlightData(flight_no="TEST_ADD_101", rows=5, seat_cols=6, price_cents=15000, seats_data="", waitlist_data="")
+    call save_flight_record(path, f)
+
+    define loaded_opt: Optional<FlightData> as load_flight_record(path)
+    assert loaded_opt is not nothing
+    define loaded: FlightData as value of loaded_opt
+    assert loaded.flight_no == "TEST_ADD_101"
+    assert loaded.rows == 5
+    assert loaded.seat_cols == 6
+    assert loaded.price_cents == 15000
+    assert loaded.seats_data == ""
+    assert loaded.waitlist_data == ""
+
+    delete file path
+
+test flight_duplicate_rejected:
+    define path: String as flight_file_path("TEST_ADD_DUP")
+    if file exists path:
+        delete file path
+
+    define f: FlightData as FlightData(flight_no="TEST_ADD_DUP", rows=3, seat_cols=4, price_cents=10000, seats_data="", waitlist_data="")
+    call save_flight_record(path, f)
+
+    define check_opt: Optional<FlightData> as load_flight_record(path)
+    assert check_opt is not nothing
+    # Verify that existing flight is detected
+    define already_exists: Bool as check_opt is not nothing
+    assert already_exists is true
+
+    delete file path

@@ -1,0 +1,84 @@
+# flight_ops.meme — Flight record serialization, persistence, and money formatting
+use models
+use grid_ops
+
+function flight_file_path(flight_no: String) -> String:
+    return "data/" + flight_no + ".json"
+
+function load_flight_record(path: String) -> Optional<FlightData>:
+    return read json record FlightData from file path or else nothing
+
+function save_flight_record(path: String, data: FlightData) -> Void:
+    if not (file exists "data"):
+        create directory "data"
+    write data as json to file path
+
+function reconstruct_grid(data: FlightData) -> List<List<String>>:
+    define grid: List<List<String>> as create_empty_grid(data.rows, data.seat_cols)
+    define s_data: String as data.seats_data
+    if length of string s_data == 0:
+        return grid
+    define entries: List<String> as split s_data by ";"
+    for each entry in entries:
+        define item_str: String as trim entry
+        if length of string item_str == 0:
+            continue
+        define parts: List<String> as split item_str by ":"
+        if length of parts >= 2:
+            define seat: String as parts[0]
+            define passenger: String as parts[1]
+            define r: Int as seat_to_row(seat)
+            define c: Int as seat_to_col(seat)
+            if r >= 0 and r < data.rows and c >= 0 and c < data.seat_cols:
+                set grid[r][c] to passenger
+    return grid
+
+function serialize_grid(grid: List<List<String>>, rows: Int, cols: Int) -> String:
+    define out: String as ""
+    for r from 0 to rows - 1:
+        for c from 0 to cols - 1:
+            if grid[r][c] != ".":
+                define seat: String as row_col_to_seat(r, c)
+                define item: String as seat + ":" + grid[r][c] + ";"
+                set out to out + item
+    return out
+
+function reconstruct_waitlist(data: FlightData) -> List<String>:
+    define list waitlist as empty List<String>
+    define w_data: String as data.waitlist_data
+    if length of string w_data == 0:
+        return waitlist
+    define raw_items: List<String> as split w_data by ","
+    for each item in raw_items:
+        define trimmed: String as trim item
+        if length of string trimmed > 0:
+            add trimmed to waitlist
+    return waitlist
+
+function serialize_waitlist(waitlist: List<String>) -> String:
+    if length of waitlist == 0:
+        return ""
+    return join waitlist with ","
+
+function format_cents(cents: Int) -> String:
+    define is_neg: Bool as cents < 0
+    define abs_cents: Int as cents
+    if is_neg:
+        set abs_cents to 0 - cents
+    define dollars: Int as abs_cents / 100
+    define rem_cents: Int as abs_cents % 100
+    define rem_str: String as text of rem_cents
+    if rem_cents < 10:
+        set rem_str to "0" + rem_str
+    define json_str: String as "[" + text of dollars + "." + rem_str + "]"
+    define tmp_name: String as "data/tmp_fmt_" + text of abs_cents + ".json"
+    if not (file exists "data"):
+        create directory "data"
+    write file tmp_name with json_str
+    define fl_list as read json file tmp_name as List<Float>
+    delete file tmp_name
+    define val_f: Float as fl_list[0]
+    define formatted: String as format val_f with 2 decimals
+    if is_neg:
+        return "-" + formatted
+    return formatted

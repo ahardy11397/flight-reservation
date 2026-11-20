@@ -1,0 +1,68 @@
+# 04_waitlist_and_promote_test.meme — Test full-flight waitlist queue and promote in strict FIFO order
+use models
+use grid_ops
+use flight_ops
+
+test full_flight_waitlist_promote_fifo:
+    # 1 row x 2 cols = exactly 2 seats (1A and 1B)
+    define grid: List<List<String>> as create_empty_grid(1, 2)
+    define list waitlist as empty List<String>
+
+    # Book both seats
+    define s1: String as find_best_seat(grid, 1, 2)
+    assert s1 == "1A"
+    set grid[0][0] to "Alice"
+
+    define s2: String as find_best_seat(grid, 1, 2)
+    assert s2 == "1B"
+    set grid[0][1] to "Bob"
+
+    # Flight is now full: find_best_seat returns ""
+    define s_full: String as find_best_seat(grid, 1, 2)
+    assert s_full == ""
+
+    # Booking without seat when full offers waitlist
+    # Add waitlisted passengers in order
+    add "WaitlistOne" to waitlist
+    add "WaitlistTwo" to waitlist
+    assert length of waitlist == 2
+    assert waitlist[0] == "WaitlistOne"
+    assert waitlist[1] == "WaitlistTwo"
+
+    # Promote on full flight fails
+    define best_on_full: String as find_best_seat(grid, 1, 2)
+    define promote_fails_on_full: Bool as length of string best_on_full == 0
+    assert promote_fails_on_full is true
+
+    # Cancel seat 1A -> seat 1A becomes free
+    set grid[0][0] to "."
+
+    # Promote from waitlist head (strict FIFO -> WaitlistOne)
+    define best_free: String as find_best_seat(grid, 1, 2)
+    assert best_free == "1A"
+    define promoted1: String as waitlist[0]
+    remove item 0 from waitlist
+    assert promoted1 == "WaitlistOne"
+    set grid[0][0] to promoted1
+
+    # Verify seat 1A has WaitlistOne and waitlist now has WaitlistTwo
+    assert grid[0][0] == "WaitlistOne"
+    assert length of waitlist == 1
+    assert waitlist[0] == "WaitlistTwo"
+
+    # Cancel seat 1B -> seat 1B becomes free
+    set grid[0][1] to "."
+    define best_free2: String as find_best_seat(grid, 1, 2)
+    assert best_free2 == "1B"
+    define promoted2: String as waitlist[0]
+    remove item 0 from waitlist
+    assert promoted2 == "WaitlistTwo"
+    set grid[0][1] to promoted2
+
+    # Verify seat 1B has WaitlistTwo and waitlist is empty
+    assert grid[0][1] == "WaitlistTwo"
+    assert length of waitlist == 0
+
+    # Promote on empty waitlist fails
+    define promote_on_empty_fails: Bool as length of waitlist == 0
+    assert promote_on_empty_fails is true

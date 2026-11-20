@@ -1,0 +1,8 @@
+# models.meme — Flight data record definition
+record FlightData:
+    flight_no: String
+    rows: Int
+    seat_cols: Int
+    price_cents: Int
+    seats_data: String
+    waitlist_data: String

@@ -1,0 +1,51 @@
+# 02_seat_selection_test.meme — Test deterministic best-seat search
+use models
+use grid_ops
+use flight_ops
+
+test best_seat_determinism_6cols:
+    define path: String as flight_file_path("TEST_BEST_SEATS")
+    if file exists path:
+        delete file path
+
+    define f: FlightData as FlightData(flight_no="TEST_BEST_SEATS", rows=10, seat_cols=6, price_cents=25000, seats_data="", waitlist_data="")
+    define grid: List<List<String>> as create_empty_grid(10, 6)
+
+    # 1st booking: window left -> 1A
+    define s1: String as find_best_seat(grid, 10, 6)
+    assert s1 == "1A"
+    set grid[0][0] to "Pass1"
+
+    # 2nd booking: window right -> 1F
+    define s2: String as find_best_seat(grid, 10, 6)
+    assert s2 == "1F"
+    set grid[0][5] to "Pass2"
+
+    # 3rd booking: aisle left -> 1C
+    define s3: String as find_best_seat(grid, 10, 6)
+    assert s3 == "1C"
+    set grid[0][2] to "Pass3"
+
+    # 4th booking: aisle right -> 1D
+    define s4: String as find_best_seat(grid, 10, 6)
+    assert s4 == "1D"
+    set grid[0][3] to "Pass4"
+
+    # 5th booking: middle left -> 1B
+    define s5: String as find_best_seat(grid, 10, 6)
+    assert s5 == "1B"
+    set grid[0][1] to "Pass5"
+
+    # 6th booking: middle right -> 1E
+    define s6: String as find_best_seat(grid, 10, 6)
+    assert s6 == "1E"
+    set grid[0][4] to "Pass6"
+
+    # Row 1 is now full! 7th booking must advance to Row 2 window left -> 2A
+    define s7: String as find_best_seat(grid, 10, 6)
+    assert s7 == "2A"
+    set grid[1][0] to "Pass7"
+
+    # 8th booking must be Row 2 window right -> 2F
+    define s8: String as find_best_seat(grid, 10, 6)
+    assert s8 == "2F"

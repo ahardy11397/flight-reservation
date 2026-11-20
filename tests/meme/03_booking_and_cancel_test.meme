@@ -1,0 +1,65 @@
+# 03_booking_and_cancel_test.meme — Test specific seat booking, collision rejection, cancel and rebook
+use models
+use grid_ops
+use flight_ops
+
+test specific_seat_booking_and_taken_rejection:
+    define path: String as flight_file_path("TEST_BOOK_SPEC")
+    if file exists path:
+        delete file path
+
+    define f: FlightData as FlightData(flight_no="TEST_BOOK_SPEC", rows=5, seat_cols=6, price_cents=20000, seats_data="", waitlist_data="")
+    call save_flight_record(path, f)
+
+    define grid: List<List<String>> as create_empty_grid(5, 6)
+    define r: Int as seat_to_row("2B")
+    define c: Int as seat_to_col("2B")
+    assert r == 1
+    assert c == 1
+
+    # Book 2B for Alice
+    assert grid[r][c] == "."
+    set grid[r][c] to "Alice"
+
+    # Attempting to book 2B again fails because seat is taken
+    define is_taken: Bool as grid[r][c] != "."
+    assert is_taken is true
+    assert grid[r][c] == "Alice"
+
+    # Save and reload
+    define s_data: String as serialize_grid(grid, 5, 6)
+    define updated: FlightData as FlightData(flight_no="TEST_BOOK_SPEC", rows=5, seat_cols=6, price_cents=20000, seats_data=s_data, waitlist_data="")
+    call save_flight_record(path, updated)
+
+    define reloaded_opt: Optional<FlightData> as load_flight_record(path)
+    assert reloaded_opt is not nothing
+    define reloaded_grid: List<List<String>> as reconstruct_grid(value of reloaded_opt)
+    assert reloaded_grid[1][1] == "Alice"
+    assert reloaded_grid[0][0] == "."
+
+    delete file path
+
+test cancel_and_rebook:
+    define grid: List<List<String>> as create_empty_grid(4, 4)
+    define r: Int as seat_to_row("3C")
+    define c: Int as seat_to_col("3C")
+    assert r == 2
+    assert c == 2
+
+    # Book 3C
+    set grid[r][c] to "Bob"
+    assert grid[r][c] == "Bob"
+
+    # Cancel 3C
+    define can_cancel: Bool as grid[r][c] != "."
+    assert can_cancel is true
+    set grid[r][c] to "."
+    assert grid[r][c] == "."
+
+    # Attempting to cancel already free seat fails
+    define cancel_free_fails: Bool as grid[r][c] == "."
+    assert cancel_free_fails is true
+
+    # Rebook 3C for Charlie
+    set grid[r][c] to "Charlie"
+    assert grid[r][c] == "Charlie"

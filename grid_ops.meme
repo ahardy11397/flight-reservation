@@ -1,0 +1,103 @@
+# grid_ops.meme — 2D seat grid logic, seat encoding, and neighbor search
+
+function col_to_letter(col: Int) -> String:
+    define alphabet: String as "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    if col < 0 or col >= 26:
+        return "?"
+    return char at col of alphabet
+
+function letter_to_col(letter: String) -> Int:
+    define alphabet: String as "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    define up: String as upper letter
+    return index of up in alphabet
+
+function row_col_to_seat(row: Int, col: Int) -> String:
+    define r_str: String as text of (row + 1)
+    define c_str: String as col_to_letter(col)
+    return r_str + c_str
+
+function seat_to_row(seat: String) -> Int:
+    define n: Int as length of string seat
+    if n < 2:
+        return -1
+    define row_str: String as slice seat from 0 to n - 1
+    for i from 0 to length of string row_str - 1:
+        define ch: String as char at i of row_str
+        if not (is digit ch):
+            return -1
+    define r: Int as integer value of row_str or else 0
+    return r - 1
+
+function seat_to_col(seat: String) -> Int:
+    define n: Int as length of string seat
+    if n < 2:
+        return -1
+    define col_char: String as char at (n - 1) of seat
+    return letter_to_col(col_char)
+
+function is_valid_seat_format(seat: String, max_rows: Int, max_cols: Int) -> Bool:
+    define r: Int as seat_to_row(seat)
+    define c: Int as seat_to_col(seat)
+    if r < 0 or r >= max_rows:
+        return false
+    if c < 0 or c >= max_cols:
+        return false
+    return true
+
+function create_empty_grid(rows: Int, cols: Int) -> List<List<String>>:
+    define list grid as empty List<List<String>>
+    for r from 0 to rows - 1:
+        define list row as empty List<String>
+        for c from 0 to cols - 1:
+            add "." to row
+        add row to grid
+    return grid
+
+function get_col_preference(cols: Int) -> List<Int>:
+    if cols == 6:
+        return [0, 5, 2, 3, 1, 4]
+    if cols == 4:
+        return [0, 3, 1, 2]
+    if cols == 2:
+        return [0, 1]
+    if cols == 1:
+        return [0]
+    define list order as empty List<Int>
+    add 0 to order
+    if cols > 1:
+        add cols - 1 to order
+    for c from 1 to cols - 2:
+        add c to order
+    return order
+
+function find_best_seat(grid: List<List<String>>, rows: Int, cols: Int) -> String:
+    define col_order: List<Int> as get_col_preference(cols)
+    for r from 0 to rows - 1:
+        for each c in col_order:
+            if grid[r][c] == ".":
+                return row_col_to_seat(r, c)
+    return ""
+
+function count_occupied_neighbors(grid: List<List<String>>, row: Int, col: Int, rows: Int, cols: Int) -> Int:
+    define count: Int as 0
+    if col > 0:
+        if grid[row][col - 1] != ".":
+            set count to count + 1
+    if col < cols - 1:
+        if grid[row][col + 1] != ".":
+            set count to count + 1
+    if row > 0:
+        if grid[row - 1][col] != ".":
+            set count to count + 1
+    if row < rows - 1:
+        if grid[row + 1][col] != ".":
+            set count to count + 1
+    return count
+
+function count_occupied_seats(grid: List<List<String>>, rows: Int, cols: Int) -> Int:
+    define total: Int as 0
+    for r from 0 to rows - 1:
+        for c from 0 to cols - 1:
+            if grid[r][c] != ".":
+                set total to total + 1
+    return total

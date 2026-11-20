@@ -1,0 +1,22 @@
+# 06_fault_tolerance_test.meme — Test handling of missing flights and corrupt JSON data
+use models
+use grid_ops
+use flight_ops
+
+test unknown_flight_handling:
+    define path: String as flight_file_path("NONEXISTENT_FLIGHT_XYZ")
+    define opt_data: Optional<FlightData> as load_flight_record(path)
+    # Missing flight must cleanly return nothing, never crash
+    assert opt_data is nothing
+
+test corrupt_data_tolerance:
+    define path: String as flight_file_path("CORRUPT_FLIGHT_TEST")
+    if not (file exists "data"):
+        create directory "data"
+    write file path with "{ broken json syntax !!!"
+
+    define opt_data: Optional<FlightData> as load_flight_record(path)
+    # Corrupt data must cleanly return nothing, never crash
+    assert opt_data is nothing
+
+    delete file path
