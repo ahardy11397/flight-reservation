@@ -1,7 +1,7 @@
 # 02_seat_selection_test.meme — Test deterministic best-seat search
-use models
-use grid_ops
-use flight_ops
+use ../../models
+use ../../grid_ops
+use ../../flight_ops
 
 test best_seat_determinism_6cols:
     define path: String as flight_file_path("TEST_BEST_SEATS")

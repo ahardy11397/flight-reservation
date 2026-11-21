@@ -1,7 +1,7 @@
 # 04_waitlist_and_promote_test.meme — Test full-flight waitlist queue and promote in strict FIFO order
-use models
-use grid_ops
-use flight_ops
+use ../../models
+use ../../grid_ops
+use ../../flight_ops
 
 test full_flight_waitlist_promote_fifo:
     # 1 row x 2 cols = exactly 2 seats (1A and 1B)

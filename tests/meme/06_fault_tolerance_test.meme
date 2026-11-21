@@ -1,7 +1,7 @@
 # 06_fault_tolerance_test.meme — Test handling of missing flights and corrupt JSON data
-use models
-use grid_ops
-use flight_ops
+use ../../models
+use ../../grid_ops
+use ../../flight_ops
 
 test unknown_flight_handling:
     define path: String as flight_file_path("NONEXISTENT_FLIGHT_XYZ")

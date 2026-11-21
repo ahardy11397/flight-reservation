@@ -1,7 +1,7 @@
 # 01_flight_add_test.meme — Test flight creation and duplicate rejection
-use models
-use grid_ops
-use flight_ops
+use ../../models
+use ../../grid_ops
+use ../../flight_ops
 
 test flight_add_ok:
     define path: String as flight_file_path("TEST_ADD_101")

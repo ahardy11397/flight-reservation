@@ -71,9 +71,8 @@ function get_col_preference(cols: Int) -> List<Int>:
     return order
 
 function find_best_seat(grid: List<List<String>>, rows: Int, cols: Int) -> String:
-    define col_order: List<Int> as get_col_preference(cols)
     for r from 0 to rows - 1:
-        for each c in col_order:
+        for each c in get_col_preference(cols):
             if grid[r][c] == ".":
                 return row_col_to_seat(r, c)
     return ""

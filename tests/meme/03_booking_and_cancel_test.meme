@@ -1,7 +1,7 @@
 # 03_booking_and_cancel_test.meme — Test specific seat booking, collision rejection, cancel and rebook
-use models
-use grid_ops
-use flight_ops
+use ../../models
+use ../../grid_ops
+use ../../flight_ops
 
 test specific_seat_booking_and_taken_rejection:
     define path: String as flight_file_path("TEST_BOOK_SPEC")

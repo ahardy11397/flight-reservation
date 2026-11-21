@@ -18,8 +18,7 @@ function reconstruct_grid(data: FlightData) -> List<List<String>>:
     define s_data: String as data.seats_data
     if length of string s_data == 0:
         return grid
-    define entries: List<String> as split s_data by ";"
-    for each entry in entries:
+    for each entry in split s_data by ";":
         define item_str: String as trim entry
         if length of string item_str == 0:
             continue
@@ -48,8 +47,7 @@ function reconstruct_waitlist(data: FlightData) -> List<String>:
     define w_data: String as data.waitlist_data
     if length of string w_data == 0:
         return waitlist
-    define raw_items: List<String> as split w_data by ","
-    for each item in raw_items:
+    for each item in split w_data by ",":
         define trimmed: String as trim item
         if length of string trimmed > 0:
             add trimmed to waitlist
@@ -61,24 +59,4 @@ function serialize_waitlist(waitlist: List<String>) -> String:
     return join waitlist with ","
 
 function format_cents(cents: Int) -> String:
-    define is_neg: Bool as cents < 0
-    define abs_cents: Int as cents
-    if is_neg:
-        set abs_cents to 0 - cents
-    define dollars: Int as abs_cents / 100
-    define rem_cents: Int as abs_cents % 100
-    define rem_str: String as text of rem_cents
-    if rem_cents < 10:
-        set rem_str to "0" + rem_str
-    define json_str: String as "[" + text of dollars + "." + rem_str + "]"
-    define tmp_name: String as "data/tmp_fmt_" + text of abs_cents + ".json"
-    if not (file exists "data"):
-        create directory "data"
-    write file tmp_name with json_str
-    define fl_list as read json file tmp_name as List<Float>
-    delete file tmp_name
-    define val_f: Float as fl_list[0]
-    define formatted: String as format val_f with 2 decimals
-    if is_neg:
-        return "-" + formatted
-    return formatted
+    return format (float of cents / 100.0) with 2 decimals

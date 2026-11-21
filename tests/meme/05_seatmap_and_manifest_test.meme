@@ -1,7 +1,7 @@
 # 05_seatmap_and_manifest_test.meme — Test seatmap grid matching, manifest revenue math, and neighbor checks
-use models
-use grid_ops
-use flight_ops
+use ../../models
+use ../../grid_ops
+use ../../flight_ops
 
 test seatmap_grid_and_neighbor_checks:
     define grid: List<List<String>> as create_empty_grid(3, 3)

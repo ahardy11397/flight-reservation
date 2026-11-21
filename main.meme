@@ -17,19 +17,22 @@ function print_usage() -> Void:
 define argc: Int as argument count
 if argc < 2:
     call print_usage()
-    fail with "Error: Missing command"
+    print error "Error: Missing command"
+    exit with code 1
 
 define cmd: String as argument 1
 
 if cmd == "add":
     if argc != 6:
         call print_usage()
-        fail with "Error: 'add' requires <flight-no> <rows> <seat-cols> <price-cents>"
+        print error "Error: 'add' requires <flight-no> <rows> <seat-cols> <price-cents>"
+        exit with code 1
     define f_no: String as argument 2
     define f_path: String as flight_file_path(f_no)
     define existing_opt: Optional<FlightData> as load_flight_record(f_path)
     if existing_opt is not nothing:
-        fail with "Error: Flight " + f_no + " already exists"
+        print error "Error: Flight " + f_no + " already exists"
+        exit with code 1
     define rows_str: String as argument 3
     define cols_str: String as argument 4
     define price_str: String as argument 5
@@ -37,7 +40,8 @@ if cmd == "add":
     define cols: Int as integer value of cols_str or else -1
     define price: Int as integer value of price_str or else -1
     if rows <= 0 or cols <= 0 or cols > 26 or price <= 0:
-        fail with "Error: Invalid rows, seat-cols, or price-cents"
+        print error "Error: Invalid rows, seat-cols, or price-cents"
+        exit with code 1
     define new_flight: FlightData as FlightData(flight_no=f_no, rows=rows, seat_cols=cols, price_cents=price, seats_data="", waitlist_data="")
     call save_flight_record(f_path, new_flight)
     print "Added flight " + f_no + " (" + text of rows + " rows, " + text of cols + " columns, " + text of price + " cents)"
@@ -46,30 +50,35 @@ if cmd == "add":
 if cmd == "book":
     if argc != 4 and argc != 5:
         call print_usage()
-        fail with "Error: 'book' requires <flight-no> <passenger-name> [seat]"
+        print error "Error: 'book' requires <flight-no> <passenger-name> [seat]"
+        exit with code 1
     define f_no: String as argument 2
     define passenger: String as argument 3
     define f_path: String as flight_file_path(f_no)
     define opt_data: Optional<FlightData> as load_flight_record(f_path)
     if opt_data is nothing:
-        fail with "Error: Flight " + f_no + " not found"
+        print error "Error: Flight " + f_no + " not found"
+        exit with code 1
     define flight: FlightData as value of opt_data
     define grid: List<List<String>> as reconstruct_grid(flight)
     define chosen_seat: String as ""
     if argc == 5:
         define req_seat: String as upper (argument 4)
         if not (is_valid_seat_format(req_seat, flight.rows, flight.seat_cols)):
-            fail with "Error: Invalid seat format: " + req_seat
+            print error "Error: Invalid seat format: " + req_seat
+            exit with code 1
         define r: Int as seat_to_row(req_seat)
         define c: Int as seat_to_col(req_seat)
         if grid[r][c] != ".":
-            fail with "Error: Seat " + req_seat + " is already booked by " + grid[r][c]
+            print error "Error: Seat " + req_seat + " is already booked by " + grid[r][c]
+            exit with code 1
         set chosen_seat to req_seat
         set grid[r][c] to passenger
     else:
         define best: String as find_best_seat(grid, flight.rows, flight.seat_cols)
         if length of string best == 0:
-            fail with "Error: Flight " + f_no + " is full. Join waitlist via: flight waitlist " + f_no + " " + passenger
+            print error "Error: Flight " + f_no + " is full. Join waitlist via: flight waitlist " + f_no + " " + passenger
+            exit with code 1
         define r: Int as seat_to_row(best)
         define c: Int as seat_to_col(best)
         set chosen_seat to best
@@ -83,21 +92,25 @@ if cmd == "book":
 if cmd == "cancel":
     if argc != 4:
         call print_usage()
-        fail with "Error: 'cancel' requires <flight-no> <seat>"
+        print error "Error: 'cancel' requires <flight-no> <seat>"
+        exit with code 1
     define f_no: String as argument 2
     define seat: String as upper (argument 3)
     define f_path: String as flight_file_path(f_no)
     define opt_data: Optional<FlightData> as load_flight_record(f_path)
     if opt_data is nothing:
-        fail with "Error: Flight " + f_no + " not found"
+        print error "Error: Flight " + f_no + " not found"
+        exit with code 1
     define flight: FlightData as value of opt_data
     if not (is_valid_seat_format(seat, flight.rows, flight.seat_cols)):
-        fail with "Error: Invalid seat format: " + seat
+        print error "Error: Invalid seat format: " + seat
+        exit with code 1
     define r: Int as seat_to_row(seat)
     define c: Int as seat_to_col(seat)
     define grid: List<List<String>> as reconstruct_grid(flight)
     if grid[r][c] == ".":
-        fail with "Error: Seat " + seat + " is not booked"
+        print error "Error: Seat " + seat + " is not booked"
+        exit with code 1
     define prev_p: String as grid[r][c]
     set grid[r][c] to "."
     define new_seats_data: String as serialize_grid(grid, flight.rows, flight.seat_cols)
@@ -109,12 +122,14 @@ if cmd == "cancel":
 if cmd == "manifest":
     if argc != 3:
         call print_usage()
-        fail with "Error: 'manifest' requires <flight-no>"
+        print error "Error: 'manifest' requires <flight-no>"
+        exit with code 1
     define f_no: String as argument 2
     define f_path: String as flight_file_path(f_no)
     define opt_data: Optional<FlightData> as load_flight_record(f_path)
     if opt_data is nothing:
-        fail with "Error: Flight " + f_no + " not found"
+        print error "Error: Flight " + f_no + " not found"
+        exit with code 1
     define flight: FlightData as value of opt_data
     define grid: List<List<String>> as reconstruct_grid(flight)
     print "=== Manifest for Flight " + f_no + " ==="
@@ -136,12 +151,14 @@ if cmd == "manifest":
 if cmd == "seatmap":
     if argc != 3:
         call print_usage()
-        fail with "Error: 'seatmap' requires <flight-no>"
+        print error "Error: 'seatmap' requires <flight-no>"
+        exit with code 1
     define f_no: String as argument 2
     define f_path: String as flight_file_path(f_no)
     define opt_data: Optional<FlightData> as load_flight_record(f_path)
     if opt_data is nothing:
-        fail with "Error: Flight " + f_no + " not found"
+        print error "Error: Flight " + f_no + " not found"
+        exit with code 1
     define flight: FlightData as value of opt_data
     define grid: List<List<String>> as reconstruct_grid(flight)
     print "=== Seatmap for Flight " + f_no + " ==="
@@ -169,13 +186,15 @@ if cmd == "seatmap":
 if cmd == "waitlist":
     if argc != 4:
         call print_usage()
-        fail with "Error: 'waitlist' requires <flight-no> <passenger-name>"
+        print error "Error: 'waitlist' requires <flight-no> <passenger-name>"
+        exit with code 1
     define f_no: String as argument 2
     define passenger: String as argument 3
     define f_path: String as flight_file_path(f_no)
     define opt_data: Optional<FlightData> as load_flight_record(f_path)
     if opt_data is nothing:
-        fail with "Error: Flight " + f_no + " not found"
+        print error "Error: Flight " + f_no + " not found"
+        exit with code 1
     define flight: FlightData as value of opt_data
     define list waitlist as reconstruct_waitlist(flight)
     add passenger to waitlist
@@ -188,20 +207,24 @@ if cmd == "waitlist":
 if cmd == "promote":
     if argc != 3:
         call print_usage()
-        fail with "Error: 'promote' requires <flight-no>"
+        print error "Error: 'promote' requires <flight-no>"
+        exit with code 1
     define f_no: String as argument 2
     define f_path: String as flight_file_path(f_no)
     define opt_data: Optional<FlightData> as load_flight_record(f_path)
     if opt_data is nothing:
-        fail with "Error: Flight " + f_no + " not found"
+        print error "Error: Flight " + f_no + " not found"
+        exit with code 1
     define flight: FlightData as value of opt_data
     define list waitlist as reconstruct_waitlist(flight)
     if length of waitlist == 0:
-        fail with "Error: Waitlist is empty for flight " + f_no
+        print error "Error: Waitlist is empty for flight " + f_no
+        exit with code 1
     define grid: List<List<String>> as reconstruct_grid(flight)
     define best: String as find_best_seat(grid, flight.rows, flight.seat_cols)
     if length of string best == 0:
-        fail with "Error: Flight " + f_no + " is full; cannot promote from waitlist"
+        print error "Error: Flight " + f_no + " is full; cannot promote from waitlist"
+        exit with code 1
     define passenger: String as waitlist[0]
     remove item 0 from waitlist
     define r: Int as seat_to_row(best)
@@ -215,4 +238,5 @@ if cmd == "promote":
     exit with code 0
 
 call print_usage()
-fail with "Error: Unknown command: " + cmd
+print error "Error: Unknown command: " + cmd
+exit with code 1
